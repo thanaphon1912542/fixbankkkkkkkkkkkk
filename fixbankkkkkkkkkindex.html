@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard & Withdrawals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- ธีมหลัก (รวมจาก 2 ไฟล์) --- */
+        :root {
+            --dark-bg: #0a0a0a;
+            --card-bg: #141414;
+            --primary-red: #ff3838; /* ใช้สีแดงนี้เป็นหลัก */
+            --border-color: rgba(255, 56, 56, 0.2);
+            --text-light: #e0e0e0;
+            --text-muted: #888;
+            --glow-color: rgba(255, 56, 56, 0.5);
+            --super-win-glow: rgba(255, 100, 100, 0.9);
+            --processing-color: #FFEB3B;
+        }
+
+        /* --- โครงสร้างหลัก --- */
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .main-wrapper {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* ระยะห่างระหว่างส่วนแจ็คพอตกับรายการถอน */
+        }
+
+        /* --- สไตล์ส่วนแจ็คพอต (จากไฟล์ที่ 1) --- */
+        .jackpot-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .time-display {
+            width: 100%; text-align: center; font-size: 0.8rem;
+            color: var(--text-muted); padding: 5px;
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 10px; margin-bottom: 16px;
+        }
+        .stat-card .icon { font-size: 1.5rem; margin-bottom: 5px; color: var(--primary-red); text-shadow: 0 0 8px var(--glow-color); }
+        .stat-card .value { font-size: 1.4rem; font-weight: 700; color: var(--text-light); }
+        .stat-card .label { font-size: 0.7rem; color: var(--text-muted); }
+        .jackpot-section .jackpot-title { font-size: 1.2rem; color: var(--primary-red); font-weight: 600; margin-bottom: 8px; text-shadow: 0 0 10px var(--glow-color); }
+        .jackpot-main-display .value { font-size: clamp(2.5rem, 10vw, 3.5rem); color: var(--primary-red); text-shadow: 0 0 15px var(--glow-color); font-weight: 700; }
+        .jackpot-main-display .label { font-size: 0.8rem; color: var(--text-muted); }
+        .sub-stats-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;}
+        .sub-stat-card { background-color: var(--dark-bg); border-color: rgba(255, 56, 56, 0.1); min-height: 70px; }
+        .sub-stat-card .value { font-size: 1.3rem; color: var(--primary-red); font-weight: 600; }
+        .sub-stat-card .label { font-size: 0.7rem; color: var(--text-muted); }
+
+        /* --- สไตล์ส่วนรายการถอนเงิน (จากไฟล์ที่ 2 - ปรับสีให้เข้ากัน) --- */
+        .withdrawal-container h2 {
+            text-align: center; color: var(--primary-red);
+            font-weight: 500; margin-bottom: 20px; font-size: 1.5rem;
+            text-shadow: 0 0 10px var(--glow-color);
+        }
+        .withdrawal-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .withdrawal-item {
+            background-color: var(--card-bg); border-radius: 12px;
+            border: 1px solid #333; padding: 12px 15px; display: flex;
+            align-items: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .withdrawal-item.highlight { border-color: var(--primary-red); box-shadow: 0 0 20px var(--glow-color); }
+        .bank-icon { width: 40px; height: 40px; border-radius: 8px; background-color: #ffffff; padding: 4px; box-sizing: border-box; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .bank-icon.krungthai-icon { padding: 6px; }
+        .bank-icon img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .withdrawal-details { flex-grow: 1; display: flex; flex-direction: column; gap: 2px; }
+        .user-info { font-size: 0.95rem; font-weight: 500; }
+        .amount-info { font-size: 0.95rem; font-weight: 700; color: var(--primary-red); }
+        .amount-info .baht { font-size: 0.85rem; font-weight: 400; color: var(--text-light); }
+        .date-info { font-size: 0.75rem; color: var(--text-muted); }
+        .status-wrapper { display: flex; align-items: center; gap: 8px; width: 110px; justify-content: flex-start; }
+        .status-icon { width: 18px; height: 18px; flex-shrink: 0; }
+        .status-text { font-weight: 500; font-size: 0.9rem; transition: color 0.3s; }
+        .icon-spinner { fill: none; stroke: var(--processing-color); stroke-width: 3; stroke-dasharray: 10 5; stroke-linecap: round; animation: spin 1.5s linear infinite; }
+        .icon-check { fill: var(--primary-red); animation: popIn 0.5s ease-out 1; }
+        .withdrawal-item.processing .icon-spinner { display: block; }
+        .withdrawal-item.processing .icon-check { display: none; }
+        .withdrawal-item.processing .status-text { color: var(--processing-color); }
+        .withdrawal-item:not(.processing) .icon-spinner { display: none; }
+        .withdrawal-item:not(.processing) .icon-check { display: block; }
+        .withdrawal-item:not(.processing) .status-text { color: var(--primary-red); }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 80% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div class="jackpot-container">
+        <div class="time-display" id="datetime-display"></div>
+        <div class="stats-grid">
+            <div class="stat-card card"><div class="icon">👤</div><div class="value" id="online-users"></div><div class="label">ออนไลน์</div></div>
+            <div class="stat-card card"><div class="icon">🏆</div><div class="value" id="today-winners"></div><div class="label">ผู้ชนะวันนี้</div></div>
+            <div class="stat-card card"><div class="icon">💰</div><div class="value" id="today-prize"></div><div class="label">รางวัลวันนี้</div></div>
+        </div>
+        <div class="jackpot-section card">
+            <div class="jackpot-title">แจ็คพอตรวม</div>
+            <div class="jackpot-main-display">
+                <div class="value" id="jackpot-total"></div>
+                <div class="label">มูลค่ารวม</div>
+            </div>
+            <div class="sub-stats-grid">
+                <div class="sub-stat-card card">
+                    <div class="label">ผู้ชนะล่าสุด</div><div class="value" id="latest-winner-prize"></div>
+                </div>
+                <div class="sub-stat-card card">
+                    <div class="label">รางวัลสูงสุด</div><div class="value" id="highest-prize"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="withdrawal-container">
+        <h2>รายการถอนเงินล่าสุด</h2>
+        <ul class="withdrawal-list" id="withdrawal-list"></ul>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // --- SCRIPT ส่วนที่ 1: แจ็คพอต ---
+    (function() {
+        if (!document.getElementById('jackpot-total')) return;
+        function formatNumber(num) { return new Intl.NumberFormat('en-US').format(num); }
+        function randomInRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        const elements = {
+            datetimeDisplay: document.getElementById('datetime-display'), onlineUsers: document.getElementById('online-users'),
+            todayWinners: document.getElementById('today-winners'), todayPrize: document.getElementById('today-prize'),
+            jackpotTotal: document.getElementById('jackpot-total'), latestWinnerPrize: document.getElementById('latest-winner-prize'),
+            highestPrize: document.getElementById('highest-prize')
+        };
+        let state = { onlineUsers: randomInRange(15000, 30000), todayWinners: 0, todayPrize: 0, jackpotTotal: 9899603, highestPrize: 58550 };
+        function updateText(element, value) { if(element) element.textContent = formatNumber(value); }
+        function animateValue(element, start, end, duration) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); if(element) element.textContent = formatNumber(Math.floor(progress * (end - start) + start)); if (progress < 1) window.requestAnimationFrame(step); }; window.requestAnimationFrame(step); }
+        for (const key in state) { if (elements[key]) updateText(elements[key], state[key]); }
+        function runPrizeUpdate() {
+             const latestWinDisplay = randomInRange(100, 800);
+             updateText(elements.latestWinnerPrize, latestWinDisplay);
+             let actualWinAmount;
+             if (Math.random() < 0.035) { actualWinAmount = randomInRange(20000, 95000); if (actualWinAmount > state.highestPrize) { state.highestPrize = actualWinAmount; updateText(elements.highestPrize, state.highestPrize);}} else { actualWinAmount = randomInRange(300, 1500); }
+             state.todayWinners += 1;
+             state.todayPrize += actualWinAmount;
+             updateText(elements.todayWinners, state.todayWinners);
+             updateText(elements.todayPrize, state.todayPrize);
+             const oldJackpot = state.jackpotTotal;
+             state.jackpotTotal += Math.floor(actualWinAmount * 0.1);
+             animateValue(elements.jackpotTotal, oldJackpot, state.jackpotTotal, 1000);
+             setTimeout(runPrizeUpdate, 2000);
+        }
+        runPrizeUpdate();
+        setInterval(() => { state.onlineUsers = Math.max(15000, Math.min(30000, state.onlineUsers + randomInRange(-12, 12))); updateText(elements.onlineUsers, state.onlineUsers); }, 3000);
+    })();
+
+    // --- SCRIPT ส่วนที่ 2: รายการถอนเงิน ---
+    (function() {
+        const listElement = document.getElementById('withdrawal-list');
+        if (!listElement) return;
+        const MAX_ITEMS = 5; let updateIndex = 0; let currentPhones = [];
+        const banks = [ { name: 'Kasikorn', icon: 'https://i.postimg.cc/5tF7h3FR/image.png' }, { name: 'SCB', icon: 'https://i.postimg.cc/BbJm1f7r/SCB.png' }, { name: 'Bangkok', icon: 'https://i.postimg.cc/RhGX7pjN/image.png' }, { name: 'Krungthai', icon: 'https://i.postimg.cc/pryqBJxC/image.png', class: 'krungthai-icon' }, ];
+        function generateFullPhoneNumber() { const prefixes = ['08', '09', '06']; const prefix = prefixes[Math.floor(Math.random() * prefixes.length)]; return prefix + Math.floor(10000000 + Math.random() * 90000000).toString(); }
+        function maskPhoneNumber(phone) { return `${phone.slice(0, 3)}-xxxx-${phone.slice(7)}`; }
+        function generateAmount() { const amount = Math.random() * (150000 - 500) + 500; return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        function createWithdrawalElement(phone, amount, bank, dateString) {
+             const item = document.createElement('li');
+             item.className = 'withdrawal-item processing';
+             const bankIconClass = bank.class ? ` ${bank.class}` : '';
+             item.innerHTML = `<div class="bank-icon${bankIconClass}"><img src="${bank.icon}" alt="${bank.name}"></div> <div class="withdrawal-details"><div class="user-info">เบอร์: ${maskPhoneNumber(phone)}</div><div class="amount-info">ยอดถอน: ${amount} <span class="baht">บาท</span></div><div class="date-info">วันที่: ${dateString}</div></div><div class="status-wrapper"><svg class="status-icon icon-spinner" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20"></circle></svg><svg class="status-icon icon-check" viewBox="0 0 24 24"><path d="M9,16.17L4.83,12l-1.42,1.41L9,19 21,7l-1.41-1.41L9,16.17Z"></path></svg><span class="status-text">กำลังโอน</span></div>`;
+             return item;
+        }
+        function updateListItem() {
+             let newPhone;
+             do { newPhone = generateFullPhoneNumber(); } while (currentPhones.includes(newPhone));
+             currentPhones[updateIndex] = newPhone;
+             const newAmount = generateAmount();
+             const newBank = banks[Math.floor(Math.random() * banks.length)];
+             const dateString = new Date().toLocaleString('th-TH', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace('พ.ศ.', '').trim();
+             const newItem = createWithdrawalElement(newPhone, newAmount, newBank, dateString);
+             const itemToReplace = listElement.children[updateIndex];
+             if (itemToReplace) {
+                 newItem.classList.add('highlight');
+                 itemToReplace.replaceWith(newItem);
+                 setTimeout(() => { const currentItem = listElement.children[updateIndex]; if (currentItem) { currentItem.classList.remove('processing'); currentItem.querySelector('.status-text').textContent = 'โอนสำเร็จ'; setTimeout(() => currentItem.classList.remove('highlight'), 500); } }, 1000);
+             }
+             updateIndex = (updateIndex + 1) % MAX_ITEMS;
+        }
+        for (let i = 0; i < MAX_ITEMS; i++) {
+             let initialPhone;
+             do { initialPhone = generateFullPhoneNumber(); } while (currentPhones.includes(initialPhone));
+             currentPhones.push(initialPhone);
+             const initialAmount = generateAmount();
+             const initialBank = banks[Math.floor(Math.random() * banks.length)];
+             const initialDate = new Date().toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'medium' }).replace('พ.ศ.', '').trim();
+             const initialItem = createWithdrawalElement(initialPhone, initialAmount, initialBank, initialDate);
+             listElement.appendChild(initialItem);
+             setTimeout(() => { initialItem.classList.remove('processing'); initialItem.querySelector('.status-text').textContent = 'โอนสำเร็จ'; }, 1000 + i * 500);
+        }
+        setInterval(updateListItem, 2000);
+    })();
+});
+</script>
+
+</body>
+</html>
